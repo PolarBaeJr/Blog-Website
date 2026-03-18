@@ -5,10 +5,10 @@ node_modules/
 .next/
 out/
 
-# Environment files
+# Environment files (all variants)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Debug
 npm-debug.log*
@@ -37,7 +37,20 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Backups
+backups/
+*.sql
+*.sql.gz
+# But keep Prisma migration SQL files (they must be version-controlled)
+!prisma/migrations/**/*.sql
+
+# Secrets and keys
+*.pem
+*.key
+secrets/
+
 # Claude Code Conductor (C3) — generated state, not source code
 .conductor/
 .codex-reviews/
 .codex/
+.claude/
