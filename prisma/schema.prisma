@@ -1,6 +1,3 @@
-// This is a minimal Prisma schema for initial project setup.
-// The full schema with all models will be created by task-002 (Prisma Schema and Database Setup).
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,8 +7,92 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Placeholder model to allow Prisma Client generation.
-// This will be replaced with the full schema in task-002.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  posts        Post[]
+  invitesSent  Invite[]
+}
+
+model Invite {
+  id          String   @id @default(cuid())
+  email       String
+  token       String   @unique
+  used        Boolean  @default(false)
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([token])
+}
+
+model Post {
+  id         String    @id @default(cuid())
+  title      String
+  slug       String    @unique
+  content    String    @db.Text
+  excerpt    String?   @db.Text
+  coverImage String?
+  published  Boolean   @default(false)
+  author     User      @relation(fields: [authorId], references: [id])
+  authorId   String
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  tags       PostTag[]
+  comments   Comment[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([published])
+  @@index([createdAt])
+  @@index([authorId])
+}
+
+model Tag {
+  id    String    @id @default(cuid())
+  name  String    @unique
+  slug  String    @unique
+  posts PostTag[]
+
+  @@index([slug])
+}
+
+model PostTag {
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId  String
+
+  @@id([postId, tagId])
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[]
+
+  @@index([slug])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+  authorName  String
+  authorEmail String?
+  content     String   @db.Text
+  approved    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([postId])
+}
+
 model SiteSettings {
   id              String   @id @default("singleton")
   blogTitle       String   @default("My Blog")
