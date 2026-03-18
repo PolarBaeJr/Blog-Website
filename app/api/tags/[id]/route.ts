@@ -11,7 +11,7 @@ import { generateSlug } from '@/lib/slug';
  * Returns updated tag, or 404 if not found, 409 if name conflicts.
  */
 export const PUT = withAuth(
-  async (req: NextRequest, _session) => {
+  async (req: NextRequest) => {
     try {
       const id = req.nextUrl.pathname.split('/').pop();
       if (!id) {

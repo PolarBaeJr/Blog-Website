@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { withAuth } from '@/lib/auth-helpers';
+import { withAuth, getSession } from '@/lib/auth-helpers';
 import { createPostSchema } from '@/lib/validation';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { generateSlug, ensureUniqueSlug } from '@/lib/slug';
 
 /**
- * GET /api/posts — List published posts (public).
+ * GET /api/posts — List published posts (public) or user's posts (auth).
  *
  * Query params:
  * - page (default 1)
@@ -14,6 +14,7 @@ import { generateSlug, ensureUniqueSlug } from '@/lib/slug';
  * - tag (slug) — filter by tag
  * - category (slug) — filter by category
  * - search — search in title
+ * - my=true — fetch current user's posts (auth required)
  */
 export async function GET(req: NextRequest) {
   try {
@@ -23,10 +24,26 @@ export async function GET(req: NextRequest) {
     const tag = searchParams.get('tag');
     const category = searchParams.get('category');
     const search = searchParams.get('search');
+    const my = searchParams.get('my') === 'true';
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: Record<string, unknown> = { published: true };
+    const where: Record<string, unknown> = {};
+
+    // If fetching user's posts, require auth and filter by authorId
+    if (my) {
+      const session = await getSession();
+      if (!session?.user) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
+      where.authorId = session.user.id;
+    } else {
+      // Otherwise, only show published posts
+      where.published = true;
+    }
 
     if (tag) {
       where.tags = {
@@ -52,7 +69,7 @@ export async function GET(req: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: my ? { updatedAt: 'desc' } : { createdAt: 'desc' },
         select: {
           id: true,
           title: true,
