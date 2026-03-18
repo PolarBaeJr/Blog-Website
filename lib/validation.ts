@@ -72,3 +72,13 @@ export const registerSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+// ─── Settings Schemas ───────────────────────────────────────────────────────
+
+export const settingsSchema = z.object({
+  blogTitle: z.string().trim().max(100, 'Title must be 100 characters or less').optional(),
+  blogDescription: z.string().trim().max(500, 'Description must be 500 characters or less').optional(),
+  footerText: z.string().trim().max(500, 'Footer text must be 500 characters or less').optional(),
+});
+
+export type SettingsInput = z.infer<typeof settingsSchema>;
