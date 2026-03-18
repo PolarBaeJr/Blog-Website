@@ -41,3 +41,34 @@ export const updatePostSchema = z.object({
 });
 
 export type UpdatePostInput = z.infer<typeof updatePostSchema>;
+
+// ─── Tag & Category Schemas ──────────────────────────────────────────────────
+
+export const tagSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(50, 'Name must be 50 characters or less'),
+});
+
+export type TagInput = z.infer<typeof tagSchema>;
+
+export const categorySchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(50, 'Name must be 50 characters or less'),
+});
+
+export type CategoryInput = z.infer<typeof categorySchema>;
+
+// ─── Invite Schemas ─────────────────────────────────────────────────────────
+
+export const inviteSchema = z.object({
+  email: z.string().trim().email('A valid email address is required').max(255, 'Email must be 255 characters or less'),
+});
+
+export type InviteInput = z.infer<typeof inviteSchema>;
+
+export const registerSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
+  email: z.string().trim().email('A valid email address is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password must be 128 characters or less'),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
