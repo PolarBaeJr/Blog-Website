@@ -45,6 +45,7 @@ model Post {
   category   Category? @relation(fields: [categoryId], references: [id])
   categoryId String?
   tags       PostTag[]
+  coAuthors  PostCoAuthor[]
   comments   Comment[]
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -71,6 +72,15 @@ model PostTag {
   tagId  String
 
   @@id([postId, tagId])
+}
+
+model PostCoAuthor {
+  id     String @id @default(cuid())
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  name   String
+
+  @@index([postId])
 }
 
 model Category {

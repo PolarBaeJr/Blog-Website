@@ -35,6 +35,7 @@ interface PostData {
   published: boolean;
   categoryId?: string | null;
   tags?: Tag[];
+  coAuthors?: { id: string; name: string }[];
 }
 
 interface PostFormProps {
@@ -59,6 +60,10 @@ export default function PostForm({ post, onSuccess }: PostFormProps) {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     post?.tags?.map((t) => t.id) || []
   );
+  const [coAuthorNames, setCoAuthorNames] = useState<string[]>(
+    post?.coAuthors?.map((ca) => ca.name) || []
+  );
+  const [newCoAuthor, setNewCoAuthor] = useState('');
 
   // Data from API
   const [tags, setTags] = useState<Tag[]>([]);
@@ -139,6 +144,17 @@ export default function PostForm({ post, onSuccess }: PostFormProps) {
     );
   }, []);
 
+  const addCoAuthor = useCallback(() => {
+    const name = newCoAuthor.trim();
+    if (!name || coAuthorNames.includes(name)) return;
+    setCoAuthorNames((prev) => [...prev, name]);
+    setNewCoAuthor('');
+  }, [newCoAuthor, coAuthorNames]);
+
+  const removeCoAuthor = useCallback((name: string) => {
+    setCoAuthorNames((prev) => prev.filter((n) => n !== name));
+  }, []);
+
   // Auto-save draft when content changes (existing posts only)
   useEffect(() => {
     const id = postIdRef.current;
@@ -148,7 +164,7 @@ export default function PostForm({ post, onSuccess }: PostFormProps) {
       setAutoSaveStatus('saving');
       try {
         const body = { title, content, excerpt: excerpt || undefined, coverImage: coverImage || undefined,
-          published: post?.published ?? false, categoryId: categoryId || undefined, tagIds: selectedTagIds };
+          published: post?.published ?? false, categoryId: categoryId || undefined, tagIds: selectedTagIds, coAuthors: coAuthorNames };
         const res = await fetch(`/api/posts/${id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
         });
@@ -160,7 +176,7 @@ export default function PostForm({ post, onSuccess }: PostFormProps) {
     }, 3000);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, content, excerpt, coverImage, categoryId, selectedTagIds]);
+  }, [title, content, excerpt, coverImage, categoryId, selectedTagIds, coAuthorNames]);
 
   // Handle form submission
   const save = async (shouldPublish: boolean) => {
@@ -169,7 +185,7 @@ export default function PostForm({ post, onSuccess }: PostFormProps) {
     setSaving(true);
     try {
       const body = { title, content, excerpt: excerpt || undefined, coverImage: coverImage || undefined,
-        published: shouldPublish, categoryId: categoryId || undefined, tagIds: selectedTagIds };
+        published: shouldPublish, categoryId: categoryId || undefined, tagIds: selectedTagIds, coAuthors: coAuthorNames };
       const url = isEditing ? `/api/posts/${post.id}` : '/api/posts';
       const method = isEditing ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -332,6 +348,42 @@ export default function PostForm({ post, onSuccess }: PostFormProps) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Co-Authors */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Co-Authors</label>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={newCoAuthor}
+            onChange={(e) => setNewCoAuthor(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCoAuthor(); } }}
+            placeholder="Type a name and press Enter"
+            maxLength={100}
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            onClick={addCoAuthor}
+            disabled={!newCoAuthor.trim()}
+            className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors"
+          >
+            Add
+          </button>
+        </div>
+        {coAuthorNames.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {coAuthorNames.map((name) => (
+              <span key={name} className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700">
+                {name}
+                <button type="button" onClick={() => removeCoAuthor(name)} className="ml-1 text-purple-500 hover:text-purple-700">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Submit Buttons */}

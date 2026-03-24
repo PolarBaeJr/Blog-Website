@@ -113,7 +113,21 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     },
     {}
   );
-  const postsWithTags = posts.map((p) => ({ ...p, tags: tagsByPostId[p.id] ?? [] }));
+  const postCoAuthors = postIds.length > 0
+    ? await prisma.postCoAuthor.findMany({
+        where: { postId: { in: postIds } },
+        select: { postId: true, name: true },
+      })
+    : [];
+  const coAuthorsByPostId = postCoAuthors.reduce<Record<string, { name: string }[]>>(
+    (acc, pc) => {
+      if (!acc[pc.postId]) acc[pc.postId] = [];
+      acc[pc.postId].push({ name: pc.name });
+      return acc;
+    },
+    {}
+  );
+  const postsWithTags = posts.map((p) => ({ ...p, tags: tagsByPostId[p.id] ?? [], coAuthors: coAuthorsByPostId[p.id] ?? [] }));
 
   const totalPages = Math.ceil(total / POSTS_PER_PAGE);
 
@@ -258,6 +272,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                   date={post.createdAt}
                   tags={post.tags}
                   coverImage={post.coverImage}
+                  coAuthors={post.coAuthors}
                 />
               ))}
             </div>

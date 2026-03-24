@@ -17,6 +17,7 @@ interface PostCardProps {
   date: Date | string;
   tags?: PostCardTag[];
   coverImage?: string | null;
+  coAuthors?: { name: string }[];
 }
 
 export default function PostCard({
@@ -28,6 +29,7 @@ export default function PostCard({
   date,
   tags = [],
   coverImage,
+  coAuthors = [],
 }: PostCardProps) {
   const formattedDate = format(new Date(date), 'MMMM d, yyyy');
 
@@ -58,7 +60,10 @@ export default function PostCard({
           </p>
         )}
         <div className="mt-4 flex items-center text-sm text-gray-500">
-          <span>{authorName}</span>
+          <span>
+            {authorName}
+            {coAuthors.length > 0 && `, ${coAuthors.map((ca) => ca.name).join(', ')}`}
+          </span>
           <span className="mx-2">&middot;</span>
           <time dateTime={new Date(date).toISOString()}>{formattedDate}</time>
         </div>

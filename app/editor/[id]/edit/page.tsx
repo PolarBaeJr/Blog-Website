@@ -29,6 +29,7 @@ export default async function EditPostPage({ params }: PageProps) {
           },
         },
       },
+      coAuthors: { select: { id: true, name: true } },
     },
   });
 
@@ -59,6 +60,7 @@ export default async function EditPostPage({ params }: PageProps) {
     published: post.published,
     categoryId: post.categoryId,
     tags: post.tags.map((pt) => pt.tag),
+    coAuthors: post.coAuthors,
   };
 
   return (

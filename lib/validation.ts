@@ -26,6 +26,7 @@ export const createPostSchema = z.object({
   published: z.boolean().default(false),
   categoryId: z.string().optional().or(z.literal('')),
   tagIds: z.array(z.string()).optional().default([]),
+  coAuthors: z.array(z.string().trim().min(1).max(100)).optional().default([]),
 });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;
@@ -38,6 +39,7 @@ export const updatePostSchema = z.object({
   published: z.boolean().optional(),
   categoryId: z.string().optional().or(z.literal('')),
   tagIds: z.array(z.string()).optional(),
+  coAuthors: z.array(z.string().trim().min(1).max(100)).optional(),
 });
 
 export type UpdatePostInput = z.infer<typeof updatePostSchema>;

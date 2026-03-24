@@ -18,6 +18,7 @@ interface PostData {
   published: boolean;
   categoryId?: string | null;
   tags: Tag[];
+  coAuthors?: { id: string; name: string }[];
 }
 
 interface EditPostClientProps {

@@ -40,6 +40,7 @@ const getPost = cache(async function getPost(postSlug: string) {
           },
         },
       },
+      coAuthors: { select: { name: true } },
     },
   });
 });
@@ -98,7 +99,10 @@ export default async function BlogPostPage({ params }: PostPageProps) {
 
           {/* Meta: author, date, category */}
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-            <span>{post.author.name}</span>
+            <span>
+              {post.author.name}
+              {post.coAuthors.length > 0 && `, ${post.coAuthors.map((ca) => ca.name).join(', ')}`}
+            </span>
             <span>&middot;</span>
             <time dateTime={post.createdAt.toISOString()}>{formattedDate}</time>
             {post.category && (

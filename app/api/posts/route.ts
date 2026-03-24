@@ -92,6 +92,7 @@ export async function GET(req: NextRequest) {
               },
             },
           },
+          coAuthors: { select: { id: true, name: true } },
         },
       }),
       prisma.post.count({ where }),
@@ -101,6 +102,7 @@ export async function GET(req: NextRequest) {
     const formattedPosts = posts.map((post) => ({
       ...post,
       tags: post.tags.map((pt) => pt.tag),
+      coAuthors: post.coAuthors,
     }));
 
     return NextResponse.json({
@@ -133,7 +135,7 @@ export const POST = withAuth(async (req, session) => {
       );
     }
 
-    const { title, content, excerpt, coverImage, published, categoryId, tagIds } = parsed.data;
+    const { title, content, excerpt, coverImage, published, categoryId, tagIds, coAuthors } = parsed.data;
 
     // Sanitize HTML content
     const sanitizedContent = sanitizeHtml(content);
@@ -166,6 +168,9 @@ export const POST = withAuth(async (req, session) => {
             tag: { connect: { id: tagId } },
           })),
         },
+        coAuthors: {
+          create: (coAuthors || []).map((name) => ({ name })),
+        },
       },
       include: {
         author: { select: { id: true, name: true } },
@@ -175,6 +180,7 @@ export const POST = withAuth(async (req, session) => {
             tag: { select: { id: true, name: true, slug: true } },
           },
         },
+        coAuthors: { select: { id: true, name: true } },
       },
     });
 
@@ -182,6 +188,7 @@ export const POST = withAuth(async (req, session) => {
     const formattedPost = {
       ...post,
       tags: post.tags.map((pt) => pt.tag),
+      coAuthors: post.coAuthors,
     };
 
     return NextResponse.json(formattedPost, { status: 201 });

@@ -23,6 +23,7 @@ export async function GET(
             tag: { select: { id: true, name: true, slug: true } },
           },
         },
+        coAuthors: { select: { id: true, name: true } },
         comments: {
           where: { approved: true },
           orderBy: { createdAt: 'desc' },
@@ -47,6 +48,7 @@ export async function GET(
     const formattedPost = {
       ...post,
       tags: post.tags.map((pt) => pt.tag),
+      coAuthors: post.coAuthors,
     };
 
     return NextResponse.json(formattedPost);
@@ -106,7 +108,7 @@ export async function PUT(
       );
     }
 
-    const { title, content, excerpt, coverImage, published, categoryId, tagIds } = parsed.data;
+    const { title, content, excerpt, coverImage, published, categoryId, tagIds, coAuthors } = parsed.data;
 
     // Build update data
     const updateData: Record<string, unknown> = {};
@@ -159,6 +161,17 @@ export async function PUT(
       ]);
     }
 
+    if (coAuthors !== undefined) {
+      await prisma.$transaction([
+        prisma.postCoAuthor.deleteMany({ where: { postId: existingPost.id } }),
+        ...(coAuthors.length > 0
+          ? [prisma.postCoAuthor.createMany({
+              data: coAuthors.map((name) => ({ postId: existingPost.id, name })),
+            })]
+          : []),
+      ]);
+    }
+
     const updatedPost = await prisma.post.update({
       where: { id: params.id },
       data: updateData,
@@ -170,6 +183,7 @@ export async function PUT(
             tag: { select: { id: true, name: true, slug: true } },
           },
         },
+        coAuthors: { select: { id: true, name: true } },
       },
     });
 
@@ -177,6 +191,7 @@ export async function PUT(
     const formattedPost = {
       ...updatedPost,
       tags: updatedPost.tags.map((pt) => pt.tag),
+      coAuthors: updatedPost.coAuthors,
     };
 
     return NextResponse.json(formattedPost);
