@@ -5,7 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface TiptapEditorProps {
   content: string;
@@ -38,6 +38,24 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       attributes: { class: 'prose prose-lg max-w-none min-h-[400px] px-4 py-3 focus:outline-none' },
     },
   });
+
+  // Detect HTML paste in rich-text mode: if the clipboard only has plain text
+  // but it looks like HTML markup (e.g. copied from a code editor), parse and
+  // insert it as rich content instead of dumping raw angle-brackets.
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    const onPaste = (event: ClipboardEvent) => {
+      const htmlMime = event.clipboardData?.getData('text/html') ?? '';
+      const plain = event.clipboardData?.getData('text/plain') ?? '';
+      if (!htmlMime && /<[a-zA-Z][^>]*>/i.test(plain)) {
+        event.preventDefault();
+        editor.commands.insertContent(plain);
+      }
+    };
+    dom.addEventListener('paste', onPaste);
+    return () => dom.removeEventListener('paste', onPaste);
+  }, [editor]);
 
   // Toggle between rich text and raw HTML mode
   const toggleHtmlMode = useCallback(() => {
