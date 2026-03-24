@@ -51,6 +51,7 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       // This handles pasting from code editors, chat apps, etc. that copy HTML as text.
       if (/^\s*<(h[1-6]|p|ul|ol|div|article|section|blockquote|pre|table)\b/i.test(plain)) {
         event.preventDefault();
+        event.stopImmediatePropagation();
         editor.commands.setContent(plain);
       }
     };
