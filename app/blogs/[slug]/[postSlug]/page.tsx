@@ -3,89 +3,73 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { cache } from 'react';
 import prisma from '@/lib/prisma';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TagBadge from '@/components/TagBadge';
 import CommentSection from '@/components/CommentSection';
+import { sanitizeHtml } from '@/lib/sanitize';
+
+export const revalidate = 60;
 
 interface PostPageProps {
-  params: { slug: string };
+  params: { slug: string; postSlug: string };
 }
 
-async function getPost(slug: string) {
-  const post = await prisma.post.findUnique({
-    where: { slug },
-    include: {
+const getPost = cache(async function getPost(postSlug: string) {
+  return prisma.post.findFirst({
+    where: { slug: postSlug, published: true },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      excerpt: true,
+      coverImage: true,
+      createdAt: true,
       author: {
-        select: { name: true },
+        select: { name: true, slug: true },
       },
       category: {
         select: { name: true, slug: true },
       },
       tags: {
-        include: {
+        select: {
           tag: {
             select: { name: true, slug: true },
           },
         },
       },
-      comments: {
-        where: { approved: true },
-        select: {
-          id: true,
-          authorName: true,
-          content: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      },
     },
   });
-
-  return post;
-}
+});
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
-  const post = await getPost(params.slug);
-
-  if (!post || !post.published) {
-    return { title: 'Post Not Found' };
+  const post = await getPost(params.postSlug);
+  if (!post || post.author.slug !== params.slug) {
+    return { title: 'Not Found' };
   }
-
-  return {
-    title: post.title,
-    description: post.excerpt || `Read "${post.title}" on our blog`,
-  };
+  return { title: post.title };
 }
 
-export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
+export default async function BlogPostPage({ params }: PostPageProps) {
+  const post = await getPost(params.postSlug);
 
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
-}
-
-export default async function PostPage({ params }: PostPageProps) {
-  const post = await getPost(params.slug);
-
-  if (!post || !post.published) {
+  if (!post || post.author.slug !== params.slug) {
     notFound();
   }
 
   const formattedDate = format(new Date(post.createdAt), 'MMMM d, yyyy');
+  const sanitizedContent = sanitizeHtml(post.content);
 
-  // Serialize comments for client component
-  const serializedComments = post.comments.map((comment) => ({
-    id: comment.id,
-    authorName: comment.authorName,
-    content: comment.content,
-    createdAt: comment.createdAt.toISOString(),
+  const rawComments = await prisma.comment.findMany({
+    where: { postId: post.id, approved: true },
+    select: { id: true, authorName: true, content: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  const initialComments = rawComments.map((c) => ({
+    ...c,
+    createdAt: c.createdAt.toISOString(),
   }));
 
   return (
@@ -121,7 +105,7 @@ export default async function PostPage({ params }: PostPageProps) {
               <>
                 <span>&middot;</span>
                 <Link
-                  href={`/?category=${encodeURIComponent(post.category.slug)}`}
+                  href={`/posts?category=${encodeURIComponent(post.category.slug)}`}
                   className="inline-flex items-center rounded-full bg-green-100 px-3 py-0.5 text-xs font-medium text-green-800 hover:bg-green-200 transition-colors"
                 >
                   {post.category.name}
@@ -139,18 +123,17 @@ export default async function PostPage({ params }: PostPageProps) {
             </div>
           )}
 
-          {/* Post Content — sanitized at write time by Post CRUD API (task-008) */}
+          {/* Post Content */}
           <div
             className="prose prose-lg mt-8 max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-img:rounded-lg"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-
-          {/* Comments */}
-          <CommentSection
-            postId={post.id}
-            initialComments={serializedComments}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </article>
+
+        {/* Comments */}
+        <div className="mx-auto max-w-3xl px-4 pb-12">
+          <CommentSection postId={post.id} initialComments={initialComments} />
+        </div>
       </main>
       <Footer />
     </div>

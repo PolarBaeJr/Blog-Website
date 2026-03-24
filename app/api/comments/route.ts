@@ -177,7 +177,6 @@ export async function POST(req: NextRequest) {
         authorEmail: authorEmail || null,
         content: sanitizedContent,
         postId,
-        approved: true, // Auto-approve for now
       },
       select: {
         id: true,

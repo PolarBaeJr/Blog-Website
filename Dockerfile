@@ -1,28 +1,20 @@
 # =============================================================================
 # Multi-stage Dockerfile for Next.js Blog
 # Optimized for ARM64 (Raspberry Pi 4/5) deployment
+# Uses Debian slim (glibc) for better Prisma ARM64 compatibility
 # =============================================================================
 
 # ---------------------------------------------------------------------------
-# Stage 1: Install production dependencies only
+# Stage 1: Build the Next.js application
 # ---------------------------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:20-slim AS builder
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# ---------------------------------------------------------------------------
-# Stage 2: Build the Next.js application
-# ---------------------------------------------------------------------------
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-# Install all dependencies (including devDependencies for build)
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy source code
 COPY . .
 
 # Generate Prisma Client
@@ -32,10 +24,12 @@ RUN npx prisma generate
 RUN npm run build
 
 # ---------------------------------------------------------------------------
-# Stage 3: Production runner (minimal image)
+# Stage 2: Production runner (minimal image)
 # ---------------------------------------------------------------------------
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"
@@ -43,7 +37,7 @@ ENV PORT=3000
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 nextjs --ingroup nodejs
 
 # Copy public assets from builder
 COPY --from=builder /app/public ./public
@@ -55,9 +49,10 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy Prisma schema and migrations for runtime migrate deploy
 COPY --from=builder /app/prisma ./prisma
 
-# Copy generated Prisma client
+# Copy generated Prisma client and CLI
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Copy the startup script
 COPY scripts/start.sh ./start.sh

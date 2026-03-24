@@ -22,6 +22,7 @@ export default function InviteForm() {
   const [fetchingInvites, setFetchingInvites] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [inviteUrl, setInviteUrl] = useState('');
 
   const fetchInvites = useCallback(async () => {
     try {
@@ -45,6 +46,7 @@ export default function InviteForm() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setInviteUrl('');
     setLoading(true);
 
     try {
@@ -61,7 +63,8 @@ export default function InviteForm() {
         return;
       }
 
-      setSuccess(`Invite sent to ${email}`);
+      setInviteUrl(data.invite?.inviteUrl || '');
+      setSuccess(`Invite created for ${email}`);
       setEmail('');
       // Refresh invite list
       fetchInvites();
@@ -139,8 +142,25 @@ export default function InviteForm() {
       )}
 
       {success && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-          {success}
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 space-y-2">
+          <p className="font-medium">{success}</p>
+          {inviteUrl && (
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={inviteUrl}
+                className="flex-1 rounded border border-green-300 bg-white px-2 py-1 text-xs text-gray-700 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => { navigator.clipboard.writeText(inviteUrl); }}
+                className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
+              >
+                Copy
+              </button>
+            </div>
+          )}
+          <p className="text-xs text-green-600">Share this link with the recipient to complete registration.</p>
         </div>
       )}
 

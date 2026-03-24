@@ -9,20 +9,22 @@ interface PostCardTag {
 }
 
 interface PostCardProps {
+  postSlug: string;
   title: string;
-  slug: string;
   excerpt?: string | null;
   authorName: string;
+  authorSlug: string;
   date: Date | string;
   tags?: PostCardTag[];
   coverImage?: string | null;
 }
 
 export default function PostCard({
+  postSlug,
   title,
-  slug,
   excerpt,
   authorName,
+  authorSlug,
   date,
   tags = [],
   coverImage,
@@ -32,7 +34,7 @@ export default function PostCard({
   return (
     <article className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
       {coverImage && (
-        <Link href={`/posts/${slug}`} className="block">
+        <Link href={`/blogs/${authorSlug}/${postSlug}`} className="block">
           <div className="relative h-48 w-full">
             <Image
               src={coverImage}
@@ -45,7 +47,7 @@ export default function PostCard({
         </Link>
       )}
       <div className="p-6">
-        <Link href={`/posts/${slug}`}>
+        <Link href={`/blogs/${authorSlug}/${postSlug}`}>
           <h2 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
             {title}
           </h2>

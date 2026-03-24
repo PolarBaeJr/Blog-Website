@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { registerSchema } from '@/lib/validation';
+import { slugifyName } from '@/lib/slugify';
 
 /**
  * In-memory rate limiting for registration endpoint.
@@ -107,12 +109,20 @@ export async function POST(req: NextRequest) {
     // Hash password with bcrypt cost factor 12
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // Generate unique slug
+    let slug = slugifyName(name);
+    const existingSlug = await prisma.user.findUnique({ where: { slug } });
+    if (existingSlug) {
+      slug = `${slug}-${crypto.randomBytes(2).toString('hex')}`;
+    }
+
     // Create user and mark invite as used in a transaction
     await prisma.$transaction([
       prisma.user.create({
         data: {
           email: email.toLowerCase(),
           name,
+          slug,
           passwordHash,
         },
       }),

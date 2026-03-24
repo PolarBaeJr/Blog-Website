@@ -32,7 +32,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '3001:3000'
     environment:
       DATABASE_URL: postgresql://blog:${DB_PASSWORD:-blogpass}@db:5432/blogdb
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}

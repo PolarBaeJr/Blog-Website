@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -11,6 +12,7 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String
+  slug         String?  @unique
   passwordHash String
   createdAt    DateTime @default(now())
   posts        Post[]
@@ -87,7 +89,7 @@ model Comment {
   authorName  String
   authorEmail String?
   content     String   @db.Text
-  approved    Boolean  @default(true)
+  approved    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   @@index([postId])

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -9,8 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "My Blog",
-  description: "A simple blogging website",
+  title: {
+    default: "PolarDev",
+    template: "%s | PolarDev",
+  },
+  description: "The PolarDev group blog",
 };
 
 export default function RootLayout({
