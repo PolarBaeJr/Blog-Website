@@ -17,6 +17,7 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   const [htmlMode, setHtmlMode] = useState(false);
   const [rawHtml, setRawHtml] = useState(content);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showHtmlBanner, setShowHtmlBanner] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -33,6 +34,8 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       const html = editor.getHTML();
       setRawHtml(html);
       onChange(html);
+      const text = editor.getText().trim();
+      setShowHtmlBanner(/^\s*<(h[1-6]|p|ul|ol|div|article|section|blockquote|pre|table)\b/i.test(text));
     },
     editorProps: {
       attributes: { class: 'prose prose-lg max-w-none min-h-[400px] px-4 py-3 focus:outline-none' },
@@ -101,6 +104,13 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     }
   }, [editor]);
 
+  const handleConvertHtml = useCallback(() => {
+    if (!editor) return;
+    const text = editor.getText();
+    editor.commands.setContent(text);
+    setShowHtmlBanner(false);
+  }, [editor]);
+
   const setLink = useCallback(() => {
     if (!editor) return;
     const previousUrl = editor.getAttributes('link').href;
@@ -157,6 +167,15 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       {uploadError && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-700">
           {uploadError}
+        </div>
+      )}
+
+      {showHtmlBanner && !htmlMode && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between text-sm">
+          <span className="text-blue-700">This looks like HTML markup.</span>
+          <button type="button" onClick={handleConvertHtml} className="text-blue-600 font-medium hover:text-blue-800">
+            Render as rich text
+          </button>
         </div>
       )}
 

@@ -76,7 +76,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <article className="mx-auto max-w-3xl px-4 py-8">
+        <article className="mx-auto max-w-5xl px-4 py-8">
           {/* Cover Image */}
           {post.coverImage && (
             <div className="relative mb-8 h-64 w-full overflow-hidden rounded-lg sm:h-80 md:h-96">
@@ -85,7 +85,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
                 alt={post.title}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, 768px"
+                sizes="(max-width: 1024px) 100vw, 1024px"
                 priority
               />
             </div>
@@ -131,7 +131,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
         </article>
 
         {/* Comments */}
-        <div className="mx-auto max-w-3xl px-4 pb-12">
+        <div className="mx-auto max-w-5xl px-4 pb-12">
           <CommentSection postId={post.id} initialComments={initialComments} />
         </div>
       </main>
