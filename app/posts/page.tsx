@@ -58,7 +58,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     where.title = { contains: search, mode: 'insensitive' };
   }
 
-  const [posts, total, authors, categories] = await Promise.all([
+  const [posts, total, authors, categories, activeTag, activeCategory] = await Promise.all([
     prisma.post.findMany({
       where,
       select: {
@@ -91,6 +91,10 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       select: { id: true, name: true, slug: true, _count: { select: { posts: { where: { published: true } } } } },
       orderBy: { name: 'asc' },
     }),
+    // active tag name (only if filtering by tag)
+    tagSlug ? prisma.tag.findUnique({ where: { slug: tagSlug }, select: { name: true } }) : null,
+    // active category name (only if filtering by category)
+    categorySlug ? prisma.category.findUnique({ where: { slug: categorySlug }, select: { name: true } }) : null,
   ]);
 
   // Fetch tags separately to avoid ARM64 composite-key join table panic
@@ -124,19 +128,11 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     basePath = `/posts?${filterParams.join('&')}`;
   }
 
-  // Fetch active tag/category names for display
-  let activeTagName: string | null = null;
-  let activeCategoryName: string | null = null;
+  // Resolve active filter names for display
+  const activeTagName: string | null = activeTag?.name ?? null;
+  const activeCategoryName: string | null = activeCategory?.name ?? null;
   let activeAuthorName: string | null = null;
 
-  if (tagSlug) {
-    const tag = await prisma.tag.findUnique({ where: { slug: tagSlug }, select: { name: true } });
-    activeTagName = tag?.name ?? null;
-  }
-  if (categorySlug) {
-    const category = await prisma.category.findUnique({ where: { slug: categorySlug }, select: { name: true } });
-    activeCategoryName = category?.name ?? null;
-  }
   if (authorSlug) {
     const author = authors.find((a) => a.slug === authorSlug);
     activeAuthorName = author?.name ?? null;
@@ -191,7 +187,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                 {categories.map((cat) => (
                   <a
                     key={cat.id}
-                    href={`/posts?category=${cat.slug}`}
+                    href={`/posts?category=${encodeURIComponent(cat.slug)}`}
                     className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                       categorySlug === cat.slug
                         ? 'bg-green-600 text-white'
@@ -233,7 +229,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                 href="/posts"
                 className="ml-2 text-sm text-red-500 hover:text-red-700 transition-colors"
               >
-                View all authors
+                Clear all filters
               </a>
             </div>
           )}

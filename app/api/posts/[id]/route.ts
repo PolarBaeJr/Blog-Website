@@ -147,22 +147,16 @@ export async function PUT(
       updateData.categoryId = categoryId || null;
     }
 
-    // Handle tag updates: disconnect all existing, connect new ones
+    // Handle tag updates atomically: delete old and create new in one transaction
     if (tagIds !== undefined) {
-      // Delete existing PostTag entries
-      await prisma.postTag.deleteMany({
-        where: { postId: existingPost.id },
-      });
-
-      // Create new PostTag entries
-      if (tagIds.length > 0) {
-        await prisma.postTag.createMany({
-          data: tagIds.map((tagId) => ({
-            postId: existingPost.id,
-            tagId,
-          })),
-        });
-      }
+      await prisma.$transaction([
+        prisma.postTag.deleteMany({ where: { postId: existingPost.id } }),
+        ...(tagIds.length > 0
+          ? [prisma.postTag.createMany({
+              data: tagIds.map((tagId) => ({ postId: existingPost.id, tagId })),
+            })]
+          : []),
+      ]);
     }
 
     const updatedPost = await prisma.post.update({

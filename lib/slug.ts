@@ -6,11 +6,12 @@ import prisma from './prisma';
  * Uses strict mode to only allow alphanumeric characters and hyphens.
  */
 export function generateSlug(title: string): string {
-  return slugify(title, {
+  const slug = slugify(title, {
     lower: true,
     strict: true,
     trim: true,
   });
+  return slug || 'untitled';
 }
 
 /**

@@ -46,15 +46,17 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     if (!editor) return;
     const dom = editor.view.dom;
     const onPaste = (event: ClipboardEvent) => {
-      const htmlMime = event.clipboardData?.getData('text/html') ?? '';
       const plain = event.clipboardData?.getData('text/plain') ?? '';
-      if (!htmlMime && /<[a-zA-Z][^>]*>/i.test(plain)) {
+      // If plain text starts with a block-level HTML tag, treat it as HTML source.
+      // This handles pasting from code editors, chat apps, etc. that copy HTML as text.
+      if (/^\s*<(h[1-6]|p|ul|ol|div|article|section|blockquote|pre|table)\b/i.test(plain)) {
         event.preventDefault();
-        editor.commands.insertContent(plain);
+        editor.commands.setContent(plain);
       }
     };
-    dom.addEventListener('paste', onPaste);
-    return () => dom.removeEventListener('paste', onPaste);
+    // capture: true so our handler fires before ProseMirror's bubble-phase handler
+    dom.addEventListener('paste', onPaste, { capture: true });
+    return () => dom.removeEventListener('paste', onPaste, { capture: true });
   }, [editor]);
 
   // Toggle between rich text and raw HTML mode

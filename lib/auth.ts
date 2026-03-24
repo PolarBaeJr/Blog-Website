@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           // Perform a dummy bcrypt compare to prevent timing attacks
           // This ensures the response time is consistent whether the user exists or not
-          await bcrypt.compare(credentials.password, '$2a$12$dummyhashfortimingattak');
+          await bcrypt.compare(credentials.password, '$2a$12$LCGAt1B/sukhcnFJCPHPk.x.YFWJ2T8yZomR7YxZi0jieDUChBTIC');
           return null;
         }
 

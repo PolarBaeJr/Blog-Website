@@ -3,10 +3,12 @@
  * e.g. "Matthew Cheng" -> "matthew-cheng"
  */
 export function slugifyName(name: string): string {
-  return name
+  const slug = name
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, ''); // trim leading/trailing hyphens
+  return slug || 'user';
 }

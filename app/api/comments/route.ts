@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { commentSchema } from '@/lib/validation';
+import { stripHtml } from '@/lib/sanitize';
 
 // ─── In-Memory Rate Limiter ──────────────────────────────────────────────────
 // Maps IP address to last comment timestamp.
@@ -20,13 +21,6 @@ if (typeof setInterval !== 'undefined') {
       }
     });
   }, RATE_LIMIT_CLEANUP_MS);
-}
-
-/**
- * Strip all HTML tags from a string, leaving only plain text.
- */
-function stripHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, '');
 }
 
 /**

@@ -17,6 +17,7 @@ interface Post {
  */
 function DeletePostButton({ postId, onDeleted }: { postId: string; onDeleted: () => void }) {
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
@@ -24,28 +25,32 @@ function DeletePostButton({ postId, onDeleted }: { postId: string; onDeleted: ()
     }
 
     setDeleting(true);
+    setError('');
     try {
       const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
       if (res.ok) {
         onDeleted();
       } else {
-        alert('Failed to delete post');
+        setError('Failed to delete post');
       }
     } catch {
-      alert('Failed to delete post');
+      setError('Failed to delete post');
     } finally {
       setDeleting(false);
     }
   };
 
   return (
-    <button
-      onClick={handleDelete}
-      disabled={deleting}
-      className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-    >
-      {deleting ? 'Deleting...' : 'Delete'}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+      >
+        {deleting ? 'Deleting...' : 'Delete'}
+      </button>
+      {error && <span className="text-xs text-red-500">{error}</span>}
+    </div>
   );
 }
 

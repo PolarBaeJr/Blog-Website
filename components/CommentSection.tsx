@@ -58,14 +58,10 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
         return;
       }
 
-      const data = await res.json();
-
-      // Optimistically add the new comment to the top of the list
-      setComments((prev) => [data.comment, ...prev]);
       setAuthorName('');
       setAuthorEmail('');
       setContent('');
-      setFeedback({ type: 'success', message: 'Comment posted successfully!' });
+      setFeedback({ type: 'success', message: 'Your comment has been submitted and is awaiting moderation.' });
     } catch {
       setFeedback({ type: 'error', message: 'An unexpected error occurred. Please try again.' });
     } finally {
